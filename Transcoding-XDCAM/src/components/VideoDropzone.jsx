@@ -1,20 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import { Box, Typography, Stack } from "@mui/material";
 import { useDropzone } from "react-dropzone";
 import "../App.css";
 
-function VideoDropzone() {
-  const [files, setFiles] = useState([]);
+function VideoDropzone({onFilesDrop, files, maxFiles}) {
+  
+  const fileLimit = files.length >= maxFiles;
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: { "video/*": [] },
-    onDrop: (acceptedFiles) => {
-      if (files.length + acceptedFiles.length > 3) {
-        alert("Você só pode adicionar no máximo 3 arquivos!");
-        return;
-      }
-      setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+    onDrop: onFilesDrop,
+    accept: {
+      "video/*": [".mp4", ".mov", ".avi", ".mkv"]
     },
+    disabled: fileLimit,
   });
 
   return (
@@ -23,45 +21,34 @@ function VideoDropzone() {
       sx={{
         border: isDragActive ? "2px dashed #1976d2" : "2px solid grey",
         borderRadius: "10px",
-        backgroundColor: isDragActive ? "#e3f2fd" : "white",
+        backgroundColor: fileLimit ? "#f1f1f1": (isDragActive ? "#e3f2fd" : "white"),
         padding: 4,
         textAlign: "center",
-        cursor: "pointer",
+        cursor: fileLimit ? 'not-allowed' : "pointer",
         transition: "background-color 0.2s, border-color 0.2s",
+        opacity: fileLimit ? 0.6 : 1,
       }}
     >
       <input {...getInputProps()} />
 
       <Stack spacing={1} alignItems="center">
-        <img src="/sgv-upload.svg" alt="sgv" className="upload-img" />
-
-        {isDragActive ? (
+        {fileLimit ? (
           <Typography variant="h6" className="texto-upload">
-            Solte o vídeo para adicionar
+            Numero máximo de arquivos atingido
           </Typography>
-        ) : files.length > 0 ? (
-          <Box sx={{ mt: 2, width: "100%" }}>
-            {files.map((file) => (
-              <Box key={file.path || file.name} sx={{ mb: 2 }}>
-                <Typography variant="subtitle1">
-                  {file.path || file.name}
-                </Typography>
-                <video
-                  src={URL.createObjectURL(file)}
-                  controls
-                  style={{
-                    width: "100%",
-                    maxHeight: "300px",
-                    borderRadius: "12px",
-                  }}
-                />
-              </Box>
-            ))}
-          </Box>
         ) : (
-          <Typography variant="h6" className="texto-upload">
-            Arraste e solte o vídeo aqui
-          </Typography>
+          <>
+            <img src="/sgv-upload.svg" alt="sgv" className="upload-img" />
+            {isDragActive ? (
+              <Typography variant="h6" className="texto-upload">
+                Solte os vídeos para adicionar
+              </Typography>
+            ) : (
+              <Typography variant="h6" className="texto-upload">
+                Arraste e solte os vídeos aqui
+              </Typography>
+            )}
+          </>
         )}
       </Stack>
     </Box>
