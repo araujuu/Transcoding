@@ -1,0 +1,185 @@
+import { useState } from 'react';
+import './App.css'
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import VideoDropzone from './components/VideoDropzone';
+import {DragDropContext, Droppable, Draggable} from '@hello-pangea/dnd'
+
+function App() {
+
+  const [videoFiles, setVideoFiles] = useState([]);
+  const [title, setTitle] = useState("");
+  const [destination, setDestination] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleFilesDrop = (acceptedFiles) => {
+    const totalFiles = videoFiles.length + acceptedFiles.length;
+    if (totalFiles > 3){
+      alert("Voce pode selecionar no máximo 3 arquivos.")
+      return;
+    }
+    setVideoFiles(currentFiles => [...currentFiles, ...acceptedFiles]);
+  };
+
+  const handleRemoveFile = (fileIndex) => {
+    setVideoFiles(currentFiles => currentFiles.filter((_, index) => index !== fileIndex));
+  }
+
+  const handleTitleChange = (event) => {
+    const originalValue = event.target.value;
+    const sanitizedValue = originalValue.replace(/[%+´`@¨&*#!$()??><çÇ"|:>;~^{-]/g, '')
+    setTitle(sanitizedValue)
+  }
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(videoFiles);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setVideoFiles(items);
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (videoFiles.length === 0) {
+      alert("Por favor, selecione pelo menos um clipe");
+      return;
+    }
+    if (!title.trim()){
+      alert("Por favor, preencha o titulo!");
+      return;
+    }
+    if(!destination){
+      alert("Por favor, selecione um destino!");
+      return;
+    }
+    setIsProcessing(true)
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('destination', destination);
+
+    videoFiles.forEach(file => {
+      formData.append('files', file);
+    });
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/processar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json(); 
+
+      if (response.ok) {
+        alert('Sucesso! Resposta do servidor: ' + result.message);
+      } else {
+        throw new Error(result.error || 'Ocorreu um erro no servidor.');
+      }
+
+    } catch (error) {
+      console.error('Erro ao enviar os arquivos:', error);
+      alert('Falha na comunicação com o servidor: ' + error.message);
+    } finally {
+      setIsProcessing(false); 
+    }
+  }; 
+  return (
+    <>
+      <form className='container-principal' onSubmit={handleSubmit}>
+        <div className='titulo-principal'>
+          <h1>TRANSCODING-XDCAM</h1>
+        </div>
+        <div className='subtitulo'>
+          <p>Processar Vídeos</p>
+        </div>
+        <div className='clipes'>
+          <h2>Clipes</h2>
+          <VideoDropzone
+            onFilesDrop={handleFilesDrop}
+            files={videoFiles}
+            maxFiles={3}
+          />
+        </div>
+        <div className='arquivos-selecionados'>
+         {videoFiles.length > 0 && <h4>Arquivos Selecionados (arraste para reordenar): </h4>}
+          <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="videoFiles">
+            {(provided) => (
+              <ul {...provided.droppableProps} ref={provided.innerRef}>
+                {videoFiles.map((file, index) => (
+                  <Draggable key={file.name + index} draggableId={file.name + index} index={index}>
+                    {(provided) => (
+                      <li
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="draggable-item"
+                      >
+                        <span>{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(index)}
+                          className='botao-remove'
+                        >
+                          Remover
+                        </button>
+                      </li>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </ul>
+            )}
+          </Droppable>
+        </DragDropContext>
+        </div>
+        <div className='titulo-video'>
+          <h2>Título</h2>
+          <input
+            type='text' 
+            className='titulo-video-input'
+            placeholder='Titulo do vídeo'
+            maxLength={250}
+            value={title}
+            onChange={handleTitleChange}
+          />
+        </div>
+        <div className='destino'>
+          <h2>Destino</h2>
+          <select 
+            name="destino" 
+            className='select'
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+          >
+            <option value="" disabled>
+              Escolha um Destino
+            </option>
+            <option value="MAM-ION">MAM VIZART ION</option> 
+            <option value="MAM_SP">MAM VIZRT SP</option>
+            <option value="MEDIA_LAKE">MEDIA LAKE</option>
+          </select>
+        </div>
+        <div className='processo'>
+          <h2>Processamento: </h2>
+          {isProcessing && (
+            <Box sx={{ display: 'flex' }}>
+              <CircularProgress />
+            </Box> 
+          )}
+        </div>
+        <div className='botao'>
+          <button type='submit' disabled={isProcessing}>
+            {isProcessing ? "Processando..." : "Enviar"}
+          </button>
+        </div>
+      </form>
+    </>
+  )
+} 
+
+export default App;
