@@ -221,19 +221,19 @@ function App() {
           {processingStatus === "in_progress" && (
             <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <CircularProgress size={24} />
-              <span>Em andamento…</span>
+              <span className="em-andamento">Em andamento…</span>
             </Box>
           )}
           {processingStatus === "success" && (
-            <span style={{ color: "green" }}>Concluído</span>
+            <span className="concluido-span">Concluído</span>
           )}
           {processingStatus === "error" && (
-            <span style={{ color: "red" }}>Falha no envio</span>
+            <span className="error-span">Falha no envio</span>
           )}
-          {processingStatus === "idle" && <span>—</span>}
+          {processingStatus === "idle" && <span></span>}
         </div>
         <button type="submit" className="botao-enviar" disabled={isProcessing}>
-          {isProcessing ? "Processando..." : "Enviar"}
+          {isProcessing ? "Enviando..." : "Enviar"}
         </button>
       </form>
     </>
