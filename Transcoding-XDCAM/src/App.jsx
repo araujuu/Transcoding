@@ -211,7 +211,7 @@ function App() {
             <option value="" disabled>
               Escolha um Destino
             </option>
-            <option value="MAM-ION">MAM VIZART ION</option>
+            <option value="MAM_ION">MAM VIZART ION</option>
             <option value="MAM_SP">MAM VIZRT SP</option>
             <option value="MEDIA_LAKE">MEDIA LAKE</option>
           </select>
